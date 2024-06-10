@@ -42,3 +42,55 @@
   failed_when: false
   changed_when: false
   when: not ansible_check_mode
+
+- name: Set datadog etc dir location
+  set_fact:
+    datadog_etc_dir: "{{ '/etc/dd-agent/'
+      if datadog_agent_major_version == 5
+      else '/etc/datadog-agent/' }}"
+  when: not ansible_check_mode
+
+- name: Generate uuid for install_id
+  command: uuidgen > /dev/null
+  register: (install_id | lower)
+
+- name: Check if install.json exists
+  stat:
+    path: "{{ datadog_etc_dir }}install.json"
+  register: install_file
+
+- name: Parse install.json file if it exists
+  set_fact:
+    install_info: "{{ lookup(
+      'file', install_file.stat.path) | from_json }}"
+  when: install_file.stat.exists
+
+- name: Set install signature from file if it exists
+  set_fact:
+    install_signature:
+      install_id: install_info.install_id
+      install_type: "{{ 'ansible_single_step'
+        if datadog_apm_instrumentation_enabled else 'ansible_manual' }}"
+      install_time: install_info.install_time
+  when: install_file.stat.exists
+      
+- name: Generate install signature
+  set_fact:
+    install_signature:
+      install_id: "{{ install_info.install_id
+        | default(install_id.stdout, true) }}"
+      install_type: "{{ 'ansible_single_step'
+        if datadog_apm_instrumentation_enabled else 'ansible_manual' }}"
+      install_time: "{{ ansible_date_time.epoch }}"
+  when: not install_file.stat.exists
+
+- name: Create json file
+  copy:
+    dest: "{{ datadog_etc_dir }}install.json"
+    content: "{{ install_signature | to_json }}"
+  failed_when: false
+  changed_when: false
+
+
+    
+
