@@ -50,10 +50,6 @@
       else '/etc/datadog-agent/' }}"
   when: not ansible_check_mode
 
-- name: Generate uuid for install_id
-  command: uuidgen > /dev/null
-  register: install_id
-
 - name: Check if install.json exists
   stat:
     path: "{{ datadog_etc_dir }}install.json"
@@ -65,12 +61,25 @@
       'file', install_file.stat.path) | from_json }}"
   when: install_file.stat.exists
 
+- name: Generate uuid based on /proc/sys/kernel/random/uuid
+  command: cat /proc/sys/kernel/random/uuid > /dev/null
+  register: install_id
+  failed_when: false
+  when: not install_file.stat.exists
+
+- name: Generate uuid using uuidgen
+  command: uuidgen > /dev/null
+  register: install_id
+  when: 
+    - not install_file.stat.exists
+    - install_id is failed
+
 - name: Set install signature from file if it exists
   set_fact:
     install_signature:
       install_id: "{{ install_info.install_id }}"
       install_type: "{{ 'ansible_single_step'
-        if datadog_apm_instrumentation_enabled else 'ansible_manual' }}"
+        if (datadog_apm_instrumentation_enabled | length > 0) else 'ansible_manual' }}"
       install_time: "{{ install_info.install_time }}"
   when: install_file.stat.exists
       
@@ -89,7 +98,3 @@
     content: "{{ install_signature | to_json }}"
   failed_when: false
   changed_when: false
-
-
-    
-
