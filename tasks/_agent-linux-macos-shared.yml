@@ -112,7 +112,6 @@
 - name: Generate uuid based on /proc/sys/kernel/random/uuid
   command: cat /proc/sys/kernel/random/uuid > /dev/null
   register: install_id
-  failed_when: false
   when: not install_file.stat.exists
 
 - name: Generate uuid using uuidgen
@@ -120,7 +119,7 @@
   register: install_id
   when: 
     - not install_file.stat.exists
-    - install_id is failed
+    - install_id.rc == 0
 
 - name: Set install signature from file if it exists
   set_fact:
@@ -132,7 +131,7 @@
 - name: Generate install signature
   set_fact:
     install_signature:
-      install_id: "{{ install_id }}"
+      install_id: "{{ install_id.stdout }}"
       install_time: "{{ ansible_date_time.epoch }}"
   when: not install_file.stat.exists
 
