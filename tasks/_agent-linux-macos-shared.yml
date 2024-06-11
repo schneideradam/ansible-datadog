@@ -112,6 +112,7 @@
 - name: Generate uuid based on /proc/sys/kernel/random/uuid
   command: cat /proc/sys/kernel/random/uuid > /dev/null
   register: install_id
+  failed_when: false
   when: not install_file.stat.exists
 
 - name: Generate uuid using uuidgen
