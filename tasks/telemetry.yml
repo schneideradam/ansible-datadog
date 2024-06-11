@@ -68,10 +68,10 @@
 - name: Set install signature from file if it exists
   set_fact:
     install_signature:
-      install_id: install_info.install_id
+      install_id: "{{ install_info.install_id }}"
       install_type: "{{ 'ansible_single_step'
         if datadog_apm_instrumentation_enabled else 'ansible_manual' }}"
-      install_time: install_info.install_time
+      install_time: "{{ install_info.install_time }}"
   when: install_file.stat.exists
       
 - name: Generate install signature
