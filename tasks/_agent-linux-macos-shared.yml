@@ -109,17 +109,18 @@
       'file', install_file.stat.path) | from_json }}"
   when: install_file.stat.exists
 
-- name: Generate uuid based on /proc/sys/kernel/random/uuid
-  command: cat /proc/sys/kernel/random/uuid > /dev/null
-  register: install_id
-  when: not install_file.stat.exists
+- name: Generate uuid
+  block:
+    - name: Generate uuid based on /proc/sys/kernel/random/uuid
+      command: cat /proc/sys/kernel/random/uuid
+      register: install_id
 
-- name: Generate uuid using uuidgen
-  command: uuidgen > /dev/null
-  register: install_id
-  when: 
-    - not install_file.stat.exists
-    - install_id.rc == 0
+  rescue:
+    - name: Generate uuid using uuidgen
+      command: uuidgen > /dev/null
+      register: install_id
+  when: not install_file.stat.exists
+  failed_when: false
 
 - name: Set install signature from file if it exists
   set_fact:
