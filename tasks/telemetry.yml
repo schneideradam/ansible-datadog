@@ -79,7 +79,7 @@
     install_signature:
       install_id: "{{ install_info.install_id }}"
       install_type: "{{ 'ansible_single_step'
-        if (datadog_apm_instrumentation_enabled | length) > 0 else 'ansible_manual' }}"
+        if datadog_apm_instrumentation_enabled != '' else 'ansible_manual' }}"
       install_time: "{{ install_info.install_time }}"
   when: install_file.stat.exists
       
@@ -88,7 +88,7 @@
     install_signature:
       install_id: "{{ install_id.stdout }}"
       install_type: "{{ 'ansible_single_step'
-        if (datadog_apm_instrumentation_enabled | length) > 0 else 'ansible_manual' }}"
+        if datadog_apm_instrumentation_enabled != '' else 'ansible_manual' }}"
       install_time: "{{ ansible_date_time.epoch }}"
   when: not install_file.stat.exists
 
