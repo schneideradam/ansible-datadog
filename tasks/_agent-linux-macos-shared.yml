@@ -120,7 +120,6 @@
       command: uuidgen > /dev/null
       register: install_id
   when: not install_file.stat.exists
-  failed_when: false
 
 - name: Set install signature from file if it exists
   set_fact:
